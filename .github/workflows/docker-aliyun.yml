@@ -1,28 +1,76 @@
-name: Build and Push Docker to Aliyun
+name: Build and Publish Docker (GHCR + optional Aliyun)
 
 on:
   push:
     branches: [ main ]
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
     steps:
       - uses: actions/checkout@v4
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+      - name: Build image (local load for artifact)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: |
+            ai-travel-planner:github-${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Save image as tar
+        run: |
+          docker save ai-travel-planner:github-${{ github.sha }} | gzip > ai-travel-planner-${{ github.sha }}.tar.gz
+      - name: Upload image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-travel-planner-image-${{ github.sha }}
+          path: ai-travel-planner-${{ github.sha }}.tar.gz
+      
+      # Publish to GitHub Container Registry (GHCR)
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and Push GHCR
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/ai-travel-planner:latest
+            ghcr.io/${{ github.repository_owner }}/ai-travel-planner:${{ github.sha }}
+
       - name: Login to Aliyun Registry
+        if: ${{ vars.PUSH_ALIYUN == 'true' }}
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.ALIYUN_REGISTRY }}
           username: ${{ secrets.ALIYUN_USERNAME }}
           password: ${{ secrets.ALIYUN_PASSWORD }}
-      - name: Build and Push
+      - name: Build and Push Aliyun
+        if: ${{ vars.PUSH_ALIYUN == 'true' }}
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: ${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAMESPACE }}/ai-travel-planner:latest
+          tags: |
+            ${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAMESPACE }}/ai-travel-planner:latest
+            ${{ secrets.ALIYUN_REGISTRY }}/${{ secrets.ALIYUN_NAMESPACE }}/ai-travel-planner:${{ github.sha }}
+      - name: Upload to GitHub Release (on tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ai-travel-planner-${{ github.sha }}.tar.gz
