@@ -14,11 +14,17 @@ npm install
 npm run dev
 ```
 
-## 必要配置（运行前在“设置”页面填写）
-- LLM Endpoint（OpenAI 兼容，如阿里云百炼兼容模式）：`https://dashscope.aliyuncs.com/compatible-mode`
-- LLM API Key：`sk-...`
-- 高德 AMap Key
-- Supabase URL / anon key（用于后续扩展登录与云端同步）
+## 必要配置（运行前在“设置”页面填写，供测试使用）
+- **LLM Endpoint（OpenAI 兼容）**：https://dashscope.aliyuncs.com/compatible-mode
+- **LLM API Key**：sk-9e96c2a5a4ad44fe837dac778e15c9d1
+- **科大讯飞 APPID**：41064e47
+- **科大讯飞 APIKey**：YjA3ZTcxNmQyYjM5ZWYwYzc4MmUxOGM3
+- **科大讯飞 APISecret**：59372a761e9184e633c7f1e09958f072
+- **科大讯飞 Chat Completions 接口**：https://spark-api-open.xf-yun.com/v2/chat/completions
+- **高德 AMap Key（JS SDK）**：a1f5cd971bc3367fbdd6816e7a5be076
+- **高德 Web 服务 Key（REST）**：a1f5cd971bc3367fbdd6816e7a5be076
+- **Supabase URL**（可选）：https://eozfimltbuzpmspsdioi.supabase.co
+- **Supabase anon key**（可选）：eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvemZpbWx0YnV6cG1zcHNkaW9pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI3NjM3NjAsImV4cCI6MjA3ODMzOTc2MH0.jU7-TZeTho2UQ7WALaSKtCdymVnxWntws-xzk-_Is5Y
 
 ## 构建与预览
 ```bash
@@ -27,20 +33,33 @@ npm run preview
 ```
 
 ## Docker
-- 构建镜像：`docker build -t ai-travel-planner:latest .`
-- 运行：`docker run -p 4173:4173 ai-travel-planner:latest`
+提供三种运行方式：本地构建、下载 CI 产物 tar.gz、本地/远端拉取镜像。
 
-## GitHub Actions（可选）
-配置以下 Secrets：
-- `ALIYUN_REGISTRY`: 如 `registry.cn-hangzhou.aliyuncs.com`
-- `ALIYUN_NAMESPACE`: 你的命名空间
-- `ALIYUN_USERNAME`, `ALIYUN_PASSWORD`
+### 方式 A：本地构建并运行
+```bash
+docker build -t ai-travel-planner:latest .
+docker run -p 4173:4173 ai-travel-planner:latest
+# 打开 http://localhost:4173 并在 Settings 页面填写 Key
+```
 
-推送到 `main` 自动构建并推送镜像。
+### 方式 B：下载 GitHub Actions Artifact（tar.gz）并运行
+1. 进入仓库 → Actions → 选择最近一次构建 → 下载 `ai-travel-planner-<commit_sha>.tar.gz`
+2. 在本地导入并运行：
+```bash
+docker load -i ai-travel-planner-<commit_sha>.tar.gz
+docker images  # 查找导入的标签，例如 ai-travel-planner:github-<sha>
+docker run -p 4173:4173 ai-travel-planner:github-<sha>
+```
 
-## 安全注意
-- 切记不要在代码库提交任何 API Key。
-- Key 仅存储在浏览器本地（`localStorage`）。请在 Settings 页面输入。
+### 运行后配置
+- 访问 `http://localhost:4173`，进入 Settings 页面，填写以下项目：
+  - LLM Endpoint
+  - LLM API Key
+  - 科大讯飞 APPID / APIKey / APISecret（仅占位）
+  - 高德 AMap Key（JS）
+  - 高德 Web 服务 Key（REST）
+  - Supabase URL / anon key（可选）
 
-## 许可
-MIT
+### 注意事项
+- Docker 镜像仅包含前端应用，所有 Key 在浏览器本地输入并存储于 `localStorage`，不会进入容器。
+- 高德 JS Key 需配置正确的 Referer 白名单；Web 服务 Key 建议最终通过后端代理调用。
