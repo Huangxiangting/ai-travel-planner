@@ -59,7 +59,3 @@ docker run -p 4173:4173 ai-travel-planner:github-<sha>
   - 高德 AMap Key（JS）
   - 高德 Web 服务 Key（REST）
   - Supabase URL / anon key（可选）
-
-### 注意事项
-- Docker 镜像仅包含前端应用，所有 Key 在浏览器本地输入并存储于 `localStorage`，不会进入容器。
-- 高德 JS Key 需配置正确的 Referer 白名单；Web 服务 Key 建议最终通过后端代理调用。

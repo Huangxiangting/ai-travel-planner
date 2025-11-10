@@ -145,7 +145,7 @@ export default function Planner() {
       </div>
       <div>
         <div className="mb-3 flex items-center gap-2">
-          <button onClick={planRoute} disabled={routeLoading} className="px-3 py-2 rounded border bg-white disabled:opacity-50">{routeLoading? '规划中...' : '路径规划（AI 地理编码）'}</button>
+          <button onClick={() => planRoute(false)} disabled={routeLoading} className="px-3 py-2 rounded border bg-white disabled:opacity-50">{routeLoading? '规划中...' : '路径规划（AI 地理编码）'}</button>
           {startCoord && endCoord && (
             <span className="text-xs text-gray-500">起点：{startCoord.lng.toFixed(6)},{startCoord.lat.toFixed(6)} → 终点：{endCoord.lng.toFixed(6)},{endCoord.lat.toFixed(6)}</span>
           )}
